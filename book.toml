@@ -6,3 +6,6 @@ src = "src"
 title = "(Draft) Final Report Semaphore Noir"
 
 [preprocessor.katex]
+
+[output.html]
+additional-css = ["custom.css"]
