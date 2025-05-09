@@ -73,7 +73,7 @@ Now, the final batch proof outputs the final hash. This hash is recomputed in th
 
 To implement batching we use bb CLI; at the moment it's not possible to use `bb.js` because the amount of recursion we use leads to memory errors. The upside of this is that bb CLI is faster than using `bb.js`, the downside is that batching can only be supported by `node` and not for browsers. 
 
-Furthermore, the Semaphore proofs that are used for batching must be generated with a special flag. This can be done with the special function [`generateNoirProofForBatching`](https://github.com/hashcloak/semaphore-noir/blob/noir-support-part2/packages/noir-proof-batch/src/generate-proof-noir.ts#L73). 
+Furthermore, the Semaphore proofs that are used for batching must be generated with a special flag. This can be done with the special function [`generateNoirProofForBatching`](https://github.com/hashcloak/semaphore-noir/blob/noir-support-part2/packages/noir-proof-batch/src/generate-proof-noir.ts#L37). 
 
 A full tutorial on how to use batching in a project can be found [here](https://hackmd.io/m6z6nF3FRo6InRlffHmDYQ).
 
