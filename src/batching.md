@@ -2,8 +2,6 @@
 
 In an effort to lower on-chain verification costs, we added an additional feature for Semaphore in Noir: batching of Semaphore Noir proofs. We achieved this by using [recursive proofs](https://noir-lang.org/docs/dev/explainers/explainer-recursion/) in Noir. In this section we'll briefly explain how it works and how to use it.
 
-**[Draft report] Note:** the first implementation we made of this assumed a trusted backend that would generate the batch proof and gather the nullifiers and merkle roots. We are now working on an improved version where there is no need for a trusted backend and the nullifiers & merkle roots are propagated in the batching circuits during the batching process. The report already reflects this new functionality, the code is WIP. The links to the code & benchmarks will be updated when the code is ready. 
-
 ## Batching the Semaphore proofs
 To achieve batching we use Noir circuits that verify 2 previously generated proofs, by using the `verify_proof` functionality:
 ```rust=
@@ -27,8 +25,8 @@ For example, with 5 Semaphore proofs it would work as depicted in the image belo
 </p>
 
 But there is a catch; we can't use the same Batch circuit for all the layers. This is because of the difference in number of public inputs; a Semaphore proof has 4 public inputs, while a Batch proof has 0. This is why we created 2 slightly different batching circuits:
-- [Circuit1](https://github.com/hashcloak/semaphore-noir/blob/noir-support-part2/packages/noir-proof-batch/circuits/batch_2_leaves/src/main.nr): Batch 2 Semaphore Proofs 
-- [Circuit2](https://github.com/hashcloak/semaphore-noir/blob/noir-support-part2/packages/noir-proof-batch/circuits/batch_2_nodes/src/main.nr): Batch 2 Recursive Proofs
+- [Circuit1](https://github.com/hashcloak/semaphore-noir/blob/feature/nullifiers_propagating/packages/noir-proof-batch/circuits/batch_2_leaves/src/main.nr): Batch 2 Semaphore Proofs 
+- [Circuit2](https://github.com/hashcloak/semaphore-noir/blob/feature/nullifiers_propagating/packages/noir-proof-batch/circuits/batch_2_nodes/src/main.nr): Batch 2 Recursive Proofs
 
 This also explains why a Semaphore proof aren't promoted to the next level if there are an odd number of leaves; it doesn't directly fit the input type for Circuit2. As a solution we chose to self-pair the last leaf, so we start batching after layer 1 with a homogeneous proof type. (Of course, another approach could be to create an additional Batch circuit that takes a Semaphore proof and a Batch proof, but we opted for the least amount of circuits for now.) This full strategy is shown below. 
 
@@ -49,14 +47,18 @@ Lifting this to the batch setting, we still need to take care of the nullifiers 
 
 This problem can be solved by propagating these values up the tree that we use for batching (as explained above). In this way, the initial input values will still be tied to the final batch proof. Then, it can be checked in the smart contract that the nullifiers and merkle roots are valid and that those were indeed the values used in the batched Semaphore proofs. 
 
-In practice, we propagate a hash of the nullifiers and merkle roots for each pair of Semaphore proofs, and apply consequent hashing in the next layers of the batching tree. Specifically it works like this (psuedocode snippets):
+In practice, we propagate a hash of all the original public inputs for each pair of Semaphore proofs, and apply consequent hashing in the next layers of the batching tree. Specifically it works like this (psuedocode snippets):
 1. Leaf layer: 
 ```rust=
 hash(
-  sem_proof1.nullifier, 
-  sem_proof1.merkle_root, 
-  sem_proof2.nullifier, 
-  sem_proof2.merkle_root
+  sem_proof1.scope,
+  sem_proof2.scope,
+  sem_proof1.message,
+  sem_proof2.message,
+  sem_proof1.merkle_root,
+  sem_proof2.merkle_root,
+  sem_proof1.nullifier,
+  sem_proof2.nullifier
 )
 ```
 3. Node layers: 
@@ -73,7 +75,7 @@ Now, the final batch proof outputs the final hash. This hash is recomputed in th
 
 To implement batching we use bb CLI; at the moment it's not possible to use `bb.js` because the amount of recursion we use leads to memory errors. The upside of this is that bb CLI is faster than using `bb.js`, the downside is that batching can only be supported by `node` and not for browsers. 
 
-Furthermore, the Semaphore proofs that are used for batching must be generated with a special flag. This can be done with the special function [`generateNoirProofForBatching`](https://github.com/hashcloak/semaphore-noir/blob/noir-support-part2/packages/noir-proof-batch/src/generate-proof-noir.ts#L37). 
+Furthermore, the Semaphore proofs that are used for batching must be generated with a special flag. This can be done with the special function [`generateNoirProofForBatching`](https://github.com/hashcloak/semaphore-noir/blob/feature/nullifiers_propagating/packages/noir-proof-batch/src/generate-proof-noir.ts#L37). 
 
 A full tutorial on how to use batching in a project can be found [here](https://hackmd.io/m6z6nF3FRo6InRlffHmDYQ).
 

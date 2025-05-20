@@ -1,7 +1,5 @@
 # Benchmarks Batching Noir proofs
 
-**[Draft report] Note:** these benchmarks are for the batching setting with the trusted backend. We will update them when the improved functionality is ready. 
-
 In the [benchmarking library](https://github.com/hashcloak/semaphore-noir-benchmarks/blob/main/node/src/batching.ts) you can find the functionality to rerun these benchmarks for batching. 
 
 The average values below are over 3 runs and always generate the final proof with the `keccak` flag, so it is ready for on-chain verification. The most important benchmarks here are batch proof generation and the gas cost estimates for on-chain verification, because the main aim for batching is to lower the total gas cost. 
@@ -12,10 +10,10 @@ Generation of a batch proof of `N` Semaphore proofs using the function [`batchSe
 
 | Function              | Avg time (ms) | Avg time (min) |
 | --------------------- | ------------- | -------------- |
-| Generate batch of 10  | 96004         | 1.60           |
-| Generate batch of 20  | 223294        | 3.72           |
-| Generate batch of 30  | 355233        | 5.92           |
-| Generate batch of 100 | 1233135       | 20.55          |
+| Generate batch of 10  | 97064         | 1.62           |
+| Generate batch of 20  | 214852        | 3.58           |
+| Generate batch of 30  | 349871        | 5.83           |
+| Generate batch of 100 | 1187020       | 19.78          |
 
 ## Semaphore proof generation for batching
 
@@ -32,21 +30,19 @@ Since batching uses recursion, we need to generate the Semaphore proof in a diff
 
 ## Gas estimates on-chain verification on a Batch proof
 
-**[Draft report] Note:** when the improved version is done, the contract will also have a validateProof function that checks the nullifiers & merkle root. The current version doesn't have that yet. We'll add those benchmarks here when it's done. 
+In the `SemaphoreNoir` smart contract, a batch proof can be validated with `validateBatchedProof`. This will verify the batch proof, check that there are no duplicated nullifiers and that all the used merkle roots are correct. 
 
-When generating a smart contract verifier for a Noir circuit using CLI, this contract has a verifier function:
-```rust=
-interface IVerifier {
-    function verify(bytes calldata _proof, bytes32[] calldata _publicInputs) external view returns (bool);
-}
-```
+For a single Semaphore Noir proof for a 100 member group, calling `validateProof` costs an estimate of 2027997 in gas. If we validate a batch of Semaphore Noir proofs, the gas usage is as follows for groups of 100 members:
 
-To fully verify a Semaphore proof, as well as a Batch proof there are additional checks to be done. In the current version of batching we haven't added those checks yet, because we aim to eliminate the trusted backend that was needed. 
+| Function                                      | Gas Usage | Comparison   |
+| --------------------------------------------- | --------- | :------------: |
+| SemaphoreNoir.validateBatchedProof 10 proofs  | 2689415   | 1.33x        |
+| SemaphoreNoir.validateBatchedProof 20 proofs  | 3095601   | 1.53x        |
+| SemaphoreNoir.validateBatchedProof 30 proofs  | 3572773   | 1.76x        |
+| SemaphoreNoir.validateBatchedProof 50 proofs  | 4745292   | 2.34x        |
+| SemaphoreNoir.validateBatchedProof 100 proofs | 8933459   | 4.41x        |
 
-The earlier gas estimates given are all with respect to the SemaphoreNoir smart contract, which include the extra checks. The estimated gas cost for just the `verify` function there is ~1747700.
-
-For a Batch proof the estimated gas cost is ~1985000. 
-This means that verifying a Batch proof is only ~1.13x more expensive than verifying a Semaphore proof. Note that this part of the verification cost for a batch proof won't depend on how many Semaphore proofs have been batched together. (The additional checks on nullifiers and merkle proofs *will* depend on the number of input proofs)
+As the table shows, batching significantly reduces the per-proof gas cost. For example, 100 proofs can be verified on-chain for only 4.4 times the gas cost of verifying a single proof. As shown earlier, generating such a batch could take around 20 minutes, showing that there's a clear tradeoff between computation effort and time off-chain and gas saved on-chain.
 
 ## Batch Proof Verification (SDK)
 
@@ -55,6 +51,6 @@ On the application side, it is possible we'd like to verify the batch proof loca
 | Function           | Avg time (ms) |
 | ------------------ | :-----------: |
 | Verify batch of 10 |      46       |
-| Verify batch of 20 |      38       |
-| Verify batch of 30 |      32       |
-| Verify batch of 100|      40       |
+| Verify batch of 20 |      32       |
+| Verify batch of 30 |      31       |
+| Verify batch of 100|      37       |
