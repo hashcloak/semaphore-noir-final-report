@@ -3,7 +3,7 @@ authors = ["Elena Fuentes & Alex Liao"]
 language = "en"
 multilingual = false
 src = "src"
-title = "(Draft) Final Report Semaphore Noir"
+title = "Final Report Semaphore Noir"
 
 [preprocessor.katex]
 

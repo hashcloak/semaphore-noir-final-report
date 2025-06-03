@@ -1,4 +1,4 @@
-# (Draft) Final Report Semaphore in Noir
+# Final Report Semaphore in Noir
 
 This is the final report for [NRG #3](https://github.com/orgs/noir-lang/discussions/7442) to implement Semaphore in Noir.
 
