@@ -12,7 +12,13 @@ Semaphore circuit requires a global value `MAX_DEPTH` to set the maximum depth o
 Below is the flamegraph for the Semaphore Noir circuit for `MAX_DEPTH`10. This graph indicates how many gates each piece of functionality contributes to the total circuitsize. In this case, `acir::blackbox::range` accounts for the majority of the gates, due to the [fixed setup costs](https://noir-lang.org/docs/tooling/profiler#understanding-bottlenecks) of lookup tables in Barretenberg UltraHonk.
 
 ![main__gates](./flamegraph_sem_noir.png)
-    
+
+### Trusted Setup Considerations
+
+A key advantage of using Noir with UltraHonk compared to Circom with Groth16 is that no trusted setup ceremony is needed for each circuit. In the original Semaphore implementation a separate trusted setup is required for all supported tree depths, since each depth results in a distinct circuit. Because Semaphore supports tree depths 1-32, this results in 32 trusted setup ceremonies. Furthermore, any change to the circuits requires a new trusted setup ceremony. 
+
+With Semaphore Noir this overhead is eliminated. The backend used in this project, Barretenberg's UltraHonk, relies on a universal trusted setup and can thus support all tree depths (circuits) without additional ceremonies. 
+
 ## Semaphore SDK
 The Semaphore SDK allows users to easily create and interact with a Semaphore group as well as generate and verify proofs. We added several key components such as the [proof package](https://github.com/hashcloak/semaphore-noir/tree/noir-support-part2/packages/proof), so it now supports Noir proofs.
     

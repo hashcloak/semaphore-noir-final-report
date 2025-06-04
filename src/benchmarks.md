@@ -191,3 +191,29 @@ Gate counts of the Semaphore Noir circuit of different `MAX_DEPTH`s.
 |        30 |        12305 |        35018 |
 |        31 |        12632 |        35959 |
 |        32 |        12959 |        36898 |
+
+## ZK artifact sizes
+
+In the SDK to generate a Semaphore or Semaphore Noir proof compiled versions of the respective circuits (Circom or Noir) are used. These are called "ZK artifacts" in the Semaphore protocol. In the case of Circom, this consists of a wasm and a json file and in the case of Noir only a json file. 
+
+For Semaphore Noir these artifacts are used to [instantiate](https://github.com/hashcloak/semaphore-noir/blob/main/packages/proof/src/semaphore-noir-backend.ts#L26) the proving backend, which is then passed on to the proving functionality. [This](https://github.com/hashcloak/semaphore-noir/blob/main/packages/proof/src/semaphore-noir-backend.ts#L36) is where the Noir artifacts are retrieved. For the original Semaphore (Circom) implementation, downloading the artifacts is done [here](https://github.com/semaphore-protocol/semaphore/blob/main/packages/proof/src/generate-proof.ts#L87). 
+
+Comparing these ZK artifacts in size, it’s clear that Noir is more lightweight than Circom. Circom requires both a .json file (around ~3.66 KB) and a .wasm file (ranging from 1.71 MB to 1.77 MB for tree depths 1–32). Noir requires only a .json file, with size increasing gradually from 259 KB to 1.52 MB depending on the tree depth. 
+
+The table below compares selected depths and shows that Noir ZK artifacts are consistently smaller.
+
+
+| Tree Depth | Noir `.json` | Circom `.json` | Circom `.wasm` |
+| ---------- | ------------ | -------------- | -------------- |
+| 1          | 259 KB       | 2.66 KB        | 1.71 MB        |
+| 2          | 301 KB       | 3.66 KB        | 1.71 MB        |
+| 3          | 342 KB       | 3.66 KB        | 1.71 MB        |
+| 4          | 384 KB       | 3.65 KB        | 1.71 MB        |
+| 5          | 426 KB       | 3.66 KB        | 1.71 MB        |
+| 10         | 635 KB       | 3.66 KB        | 1.72 MB        |
+| 15         | 844 KB       | 3.66 KB        | 1.75 MB        |
+| 20         | 1.03 MB      | 3.65 KB        | 1.75 MB        |
+| 30         | 1.44 MB      | 3.66 KB        | 1.76 MB        |
+| 32         | 1.52 MB      | 3.65 KB        | 1.77 MB        |
+
+The Noir ZK artifacts can be found [here](https://github.com/hashcloak/snark-artifacts/tree/main/packages/semaphore-noir) and the original artifacts can be found [here](https://github.com/privacy-scaling-explorations/snark-artifacts/tree/main/packages/semaphore). 
